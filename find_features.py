@@ -10,13 +10,17 @@ import pandas as pd
 
 #DIR = 'tests/test6/'
 #file = 'test6.2.JPG'
-DIR = '../regular_cards/'
+DIR = '../regular_cards/pdfs'
 file = 'IMG_5335.JPG'
 
-
+files_names_list = [f for f in os.listdir(DIR) if isfile(join(DIR, f))]
+files_names_list.sort()
+print(len(files_names_list))
 def find_features(directory, file_name):
     file_path = os.path.join(DIR, file_name)
-    doc = fitz.open(file_path + '.pdf')
+    #doc = fitz.open(file_path + '.pdf')
+    doc = fitz.open(file_path)
+
     page = doc.loadPage(0)
     textpage = page.getTextPage()
     text = textpage.extractText()
@@ -26,9 +30,25 @@ def find_features(directory, file_name):
     #regular expression to find phone numbers
     numbers = re.findall(r'[\+\(]?[1-9][0-9 .\-\(\)]{8,}[0-9]', text, re.IGNORECASE)
 
-    names = re.findall(r'[A-Z][a-z]*[\s-][A-Z][a-z]*', text)
-    #print(names)
+    names = re.findall(r'[A-Z][a-z]{3,}[\s-][A-Z][a-z]{3,}', text)
 
+    www = re.findall(r'(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})', text)
+    #print(www)
+    #print(len(names))
+    if len(names) > 1:
+        longest = ' '
+        for features in names[1:]:
+            if len(features) > len(longest):
+                #print(features)
+                longest = features
+        #print(longest)
+        new_names = names[0] + " " + longest
+        #print(type(new_names))
+        new_names = new_names.replace('\n', " ")
+        names = [new_names]
+        #print(new_names)
+    elif len(names) == 1:
+        names[0] = names[0].replace('\n', " ")
     features_found = []
     features_found.extend(emails)
     features_found.extend(numbers)
@@ -44,12 +64,22 @@ def find_features(directory, file_name):
     #print(bounding_boxes)
     #print(len(bounding_boxes))
 
+    if not names:
+        names = ['']
+    if not numbers:
+        numbers = ['']
+    if not emails:
+        emails = ['']
+    if not www:
+        www = ['']
     # Create a zipped list of tuples from above lists
-    zippedList = list(zip([file_name], names, numbers, emails))
-    df = pd.DataFrame(zippedList, columns=['Filename', 'Name', 'number', 'email'])
+    zippedList = list(zip([file_name], names, numbers, emails, www))
+    #list(zip([file_name][0], names[0], numbers[0], emails, www))
+    print(zippedList)
+    df = pd.DataFrame(zippedList, columns=['filename', 'name', 'number', 'email', 'www'])
     #dic = {'name': names, 'number': numbers, 'email': emails}
     #df = pd.DataFrame(dic)
-    csv = df.to_csv(index=False)
+
 
     def draw():
         page_dict = page.getText('dict')
@@ -70,11 +100,17 @@ def find_features(directory, file_name):
 
         ax.imshow(im)
         plt.savefig('foo.JPG')
-    return csv
+    #return csv
+    return df
     #draw()
 
-a = find_features(directory=DIR, file_name=file)
-print(a)
+dfs = find_features(directory=DIR, file_name=files_names_list[0])
+for file in files_names_list[1:]:
+    final =find_features(DIR, file)
+    #print(final)
+    dfs = dfs.append(final)
+#print(dfs)
+dfs.to_csv('out.csv', index=False)
 #plt.show()
 
 
