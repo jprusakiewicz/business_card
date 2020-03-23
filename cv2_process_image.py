@@ -4,8 +4,11 @@ import numpy as np
 import argparse
 import cv2
 import imutils
-import os
-from os.path import isfile, join
+from PIL import Image
+from io import BytesIO
+import io
+
+
 # construct the argument parser and parse the arguments
 
 
@@ -67,17 +70,17 @@ def order_points(pts):
     # return the ordered coordinates
     return rect
 
-def process_photo(photo_path):
+
+def process_photo(photo_path, ratio_parameter:int, blur=5, canny_thresh_l=50, canny_thresh_h=250, PolyDP_ratio=0.02):
     image = cv2.imread(photo_path)
-    print(image.shape[0])
-    ratio = image.shape[0] / 250.0
+    ratio = image.shape[0] / ratio_parameter
     orig = image.copy()
-    image = imutils.resize(image, height = 250)
+    image = imutils.resize(image, height = ratio_parameter)
     # convert the image to grayscale, blur it, and find edges
     # in the image
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    gray = cv2.GaussianBlur(gray, (5, 5), 0)
-    edged = cv2.Canny(gray, 50, 230)
+    gray = cv2.GaussianBlur(gray, (blur, blur), 0)
+    edged = cv2.Canny(gray, canny_thresh_l, canny_thresh_h)
     cnts = cv2.findContours(edged.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
     cnts = imutils.grab_contours(cnts)
     cnts = sorted(cnts, key = cv2.contourArea, reverse = True)[:8]
@@ -85,14 +88,19 @@ def process_photo(photo_path):
     for c in cnts:
         # approximate the contour
         peri = cv2.arcLength(c, True)
-        approx = cv2.approxPolyDP(c, 0.02 * peri, True)
+        approx = cv2.approxPolyDP(c, PolyDP_ratio * peri, True)
         # if our approximated contour has four points, then we
         # can assume that we have found our screen
         if len(approx) == 4:
             screenCnt = approx
             break
-    print(cv2.contourArea(approx))
-    warped = four_point_transform(orig, screenCnt.reshape(4, 2) * ratio)
+    try:
+        warped = four_point_transform(orig, screenCnt.reshape(4, 2) * ratio)
+    except Exception:
+        print('no contours')
+        cv2.imshow("Original", imutils.resize(orig, height=650))
+        cv2.waitKey(0)
+        return None
     # convert the warped image to grayscale, then threshold it
     # to give it that 'black and white' paper effect
     warped = cv2.cvtColor(warped, cv2.COLOR_BGR2GRAY)
@@ -102,22 +110,15 @@ def process_photo(photo_path):
     cv2.imshow("Scanned", imutils.resize(warped, height = 650))
     cv2.imshow("Edged", imutils.resize(edged, height = 650))
     cv2.waitKey(0)
+    img = Image.fromarray(warped, "L")
+    img.save("image_to_send_to_ocr.jpg", "JPEG")
+    with open('image_to_send_to_ocr.jpg', 'rb') as f:
+        bc = f.read()
+    dat = {'file': bc}
+    return dat
 
 
-#######
-DIR = '../regular_cards/'
-#DIR = '../vertical_cards/'
-#print(len([name for name in os.listdir(DIR) if os.path.isfile(os.path.join(DIR, name))]))
+#output_bytes = requests.post(ocr_url, files=ocr_request_params).content
+#output_file = io.BytesIO(output_bytes)
 
 
-files_names = [f for f in os.listdir(DIR) if isfile(join(DIR, f))]
-files_names.sort()
-
-# for file in files_names[4:]:
-#     print(file)
-#     #img = cv2.imread('../regular_photos/'+files_names[1])
-#     try:
-#         file_path = os.path.join(DIR, file)
-#         process_photo(file_path)
-#     except Exception as e:
-#         print(e)
