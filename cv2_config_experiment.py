@@ -6,24 +6,35 @@ import fitz
 import pandas as pd
 
 
-DIR = '../regular_cards/'
+DIR = '../all_photos/'
 # DIR = '../vertical_cards/'
-# print(len([name for name in os.listdir(DIR) if os.path.isfile(os.path.join(DIR, name))]))
-
+#ratio_parameter = 200
+#blur = 5
+#canny_thresh_l = 50
+#canny_thresh_h = 230
 files_names = [f for f in os.listdir(DIR) if isfile(join(DIR, f))]
 files_names.sort()
-ratio_parameter = 200
-blur = 5
-canny_thresh_l = 50
-canny_thresh_h = 230
+
 print(len(files_names))
 
-
-def experiment(file_path, ratio_parameter, blur, canny_thresh_l, canny_thresh_h):
+def second_experiment(file_path, ratio_parameter,blur):
     try:
-        processed_image = process_photo(file_path, ratio_parameter=ratio_parameter, blur=blur,
-                                        canny_thresh_l=canny_thresh_l, canny_thresh_h=canny_thresh_h)
-        req = requests.post('http://localhost:5000/ocr', files=processed_image)
+        contour_area = process_photo(file_path, ratio_parameter=ratio_parameter, blur=blur)
+
+        _results = {'file': file, ratio_parameter: str(contour_area)}
+        return _results
+    except Exception:
+        # print(e)
+        # print(file, 'failed |', e)
+        # _results = {'file': file, 'len': 'failed', 'ratio_parameter': ratio_parameter, 'blur': blur,
+        #             'canny_thresh_l': canny_thresh_l, 'canny_thresh_h': canny_thresh_h}
+        _results = {'file': file, ratio_parameter: 'failed'}
+        return _results
+
+def experiment(file_path, ratio_parameter, blur):
+    try:
+        processed_image = process_photo(file_path, ratio_parameter=ratio_parameter, blur=blur)
+        req = requests.post('http://localhost:88/ocr', files=processed_image)
         with open('temporary_experiment_file' + '.pdf', 'wb') as fw:
             fw.write(req.content)
         doc = fitz.open('temporary_experiment_file.pdf')
@@ -44,17 +55,13 @@ def experiment(file_path, ratio_parameter, blur, canny_thresh_l, canny_thresh_h)
         return _results
 
 d = []
-for file in files_names[1:]:
-    # print(file)
-    # img = cv2.imread('../regular_photos/'+files_names[1])
+for file in files_names[:]:
     file_path = os.path.join(DIR, file)
     ratio_parameter = 50
-    results = experiment(file_path=file_path, ratio_parameter=ratio_parameter, blur=5,
-                         canny_thresh_l=50, canny_thresh_h=230)
+    results = second_experiment(file_path=file_path, ratio_parameter=ratio_parameter, blur=5)
     ratio_parameter += 50
     while ratio_parameter < 550:
-        b = experiment(file_path=file_path, ratio_parameter=ratio_parameter, blur=5,
-                             canny_thresh_l=50, canny_thresh_h=230)
+        b = second_experiment(file_path=file_path, ratio_parameter=ratio_parameter, blur=5)
         results[ratio_parameter] = b[ratio_parameter]
         ratio_parameter += 50
     print(results)

@@ -6,7 +6,7 @@ results = pd.read_csv("experiment_out.csv")
     #print(results[column])
 dictionary = {}
 for row in results.values:
-    l = [float(a) if a != 'failed' else 0 for a in row[1:] ]
+    l = [float(a) if a != 'None' else 0 for a in row[1:] ]
     m = pd.Series(l)
     print(m)
     idx = m.idxmax()

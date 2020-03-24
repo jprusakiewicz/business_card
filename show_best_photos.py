@@ -1,6 +1,6 @@
 import cv2_process_image
 
-DIR = '../regular_cards/'
+DIR = '../all_photos/'
 #from cv2_process_image import process_photo
 import os
 import json
