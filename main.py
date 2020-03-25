@@ -3,6 +3,9 @@ from cv2_process_image import find_best_ratio
 from os.path import isfile, join
 import pandas as pd
 import os
+from PIL import Image
+import imutils
+import cv2
 
 DIR = '../all_photos/'
 #file = '20200323_150630.jpg'
@@ -15,7 +18,11 @@ files_names.sort()
 def main(file_path):
     d = get_all_parameters_for_single_file(file_path)
     best_ratio = get_best_parameter_for_single_file(d)
-    cv2_process_image.show_segment(file_path, ratio_parameter=best_ratio)
+    scanned = cv2_process_image.show_segment(file_path, ratio_parameter=best_ratio)
+    #cv2.imshow("scanned", imutils.resize(scanned, height=650))
+    #cv2.waitKey(0)
+    img = Image.fromarray(scanned, "L")
+    img.save(os.path.join('../output/', file), "JPEG")
 
 
 def get_best_parameter_for_single_file(d):
@@ -51,6 +58,6 @@ def get_all_parameters_for_single_file(file_path):
     return d
 
 
-for file in files_names[4:]:
+for file in files_names[:]:
     file_path = os.path.join(DIR, file)
     main(file_path)

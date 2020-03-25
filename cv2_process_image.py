@@ -210,7 +210,7 @@ def show_segment(photo_path, ratio_parameter: int, PolyDP_ratio=0.02):
         print('no contours')
         #cv2.imshow("Original", imutils.resize(orig, height=650))
         #cv2.waitKey(0)
-        return None
+        return fallback(orig)
     # convert the warped image to grayscale, then threshold it
     # to give it that 'black and white' paper effect
     warped = cv2.cvtColor(warped, cv2.COLOR_BGR2GRAY)
@@ -218,22 +218,21 @@ def show_segment(photo_path, ratio_parameter: int, PolyDP_ratio=0.02):
     #t = cv2.adaptiveThreshold(warped, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
     warped = (warped > t).astype("uint8") * 255
 
-    cv2.imshow("Original", imutils.resize(gray_blurred, height=650))
-    cv2.imshow("Scanned", imutils.resize(warped, height=650))
-    cv2.imshow("Edged", imutils.resize(edged, height=650))
-    cv2.waitKey(0)
-    img = Image.fromarray(warped, "L")
-    img.save("image_to_send_to_ocr.jpg", "JPEG")
+    #cv2.imshow("Original", imutils.resize(gray_blurred, height=650))
+    #cv2.imshow("Scanned", imutils.resize(warped, height=650))
+    #cv2.imshow("Edged", imutils.resize(edged, height=650))
+    #cv2.waitKey(0)
+
     with open('image_to_send_to_ocr.jpg', 'rb') as f:
         bc = f.read()
     dat = {'file': bc}
     #return dat
-    return contour_area
+    return warped
 
 def fallback(orig):
     gray = cv2.cvtColor(orig, cv2.COLOR_BGR2GRAY)
     t = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 35, 17)
-    cv2.imshow("orig", imutils.resize(t, height=650))
-    cv2.waitKey(0)
+    #cv2.imshow("orig", imutils.resize(t, height=650))
+    #cv2.waitKey(0)
     return t
     #t = cv2.adaptiveThreshold(warped, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
