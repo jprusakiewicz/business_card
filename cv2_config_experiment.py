@@ -1,4 +1,4 @@
-from cv2_process_image import process_photo
+from cv2_process_image import find_best_ratio
 import os
 from os.path import isfile, join
 import requests
@@ -19,7 +19,7 @@ print(len(files_names))
 
 def second_experiment(file_path, ratio_parameter,blur):
     try:
-        contour_area = process_photo(file_path, ratio_parameter=ratio_parameter, blur=blur)
+        contour_area = find_best_ratio(file_path, ratio_parameter=ratio_parameter)
 
         _results = {'file': file, ratio_parameter: str(contour_area)}
         return _results
@@ -31,28 +31,28 @@ def second_experiment(file_path, ratio_parameter,blur):
         _results = {'file': file, ratio_parameter: 'failed'}
         return _results
 
-def experiment(file_path, ratio_parameter, blur):
-    try:
-        processed_image = process_photo(file_path, ratio_parameter=ratio_parameter, blur=blur)
-        req = requests.post('http://localhost:88/ocr', files=processed_image)
-        with open('temporary_experiment_file' + '.pdf', 'wb') as fw:
-            fw.write(req.content)
-        doc = fitz.open('temporary_experiment_file.pdf')
-        page = doc.loadPage(0)
-        textpage = page.getTextPage()
-        text = textpage.extractText()
-        # print(file, str(len(text)))
-        # _results = {'file': file, 'len': str(len(text)), 'ratio_parameter': ratio_parameter, 'blur': blur,
-        #         #             'canny_thresh_l': canny_thresh_l, 'canny_thresh_h': canny_thresh_h}
-        _results = {'file': file, ratio_parameter: str(len(text))}
-        return _results
-    except Exception:
-        # print(e)
-        # print(file, 'failed |', e)
-        # _results = {'file': file, 'len': 'failed', 'ratio_parameter': ratio_parameter, 'blur': blur,
-        #             'canny_thresh_l': canny_thresh_l, 'canny_thresh_h': canny_thresh_h}
-        _results = {'file': file, ratio_parameter: 'failed'}
-        return _results
+# def experiment(file_path, ratio_parameter, blur):
+#     try:
+#         processed_image = process_photo(file_path, ratio_parameter=ratio_parameter)
+#         req = requests.post('http://localhost:88/ocr', files=processed_image)
+#         with open('temporary_experiment_file' + '.pdf', 'wb') as fw:
+#             fw.write(req.content)
+#         doc = fitz.open('temporary_experiment_file.pdf')
+#         page = doc.loadPage(0)
+#         textpage = page.getTextPage()
+#         text = textpage.extractText()
+#         # print(file, str(len(text)))
+#         # _results = {'file': file, 'len': str(len(text)), 'ratio_parameter': ratio_parameter, 'blur': blur,
+#         #         #             'canny_thresh_l': canny_thresh_l, 'canny_thresh_h': canny_thresh_h}
+#         _results = {'file': file, ratio_parameter: str(len(text))}
+#         return _results
+#     except Exception:
+#         # print(e)
+#         # print(file, 'failed |', e)
+#         # _results = {'file': file, 'len': 'failed', 'ratio_parameter': ratio_parameter, 'blur': blur,
+#         #             'canny_thresh_l': canny_thresh_l, 'canny_thresh_h': canny_thresh_h}
+#         _results = {'file': file, ratio_parameter: 'failed'}
+#         return _results
 
 d = []
 for file in files_names[:]:

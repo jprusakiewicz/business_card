@@ -14,6 +14,6 @@ for row in results.values:
     dictionary[row[0]] = (idx+1)*50
 print(dictionary)
 json = json.dumps(dictionary)
-f = open("experiment_best_performance.json","w")
+f = open("experiment_best_performance3.json","w")
 f.write(json)
 f.close()
