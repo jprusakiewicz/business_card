@@ -4,16 +4,6 @@ from os.path import isfile, join
 import pandas as pd
 import os
 from PIL import Image
-import imutils
-import cv2
-
-DIR = '../all_photos/'
-#DIR = '/Volumes/WeDeliverFTP/DATA_CAPTURE/invoices_pdfs_and_images/paragony_and_others/'
-#file = '20200323_150630.jpg'
-
-files_names = [f for f in os.listdir(DIR) if isfile(join(DIR, f))]
-files_names.sort()
-
 
 
 def main(file_path):
@@ -27,8 +17,8 @@ def main(file_path):
 def get_best_parameter_for_single_file(d):
     df = pd.DataFrame(d)
     for row in df.values:
-        l = [float(a) if a != 'None' else 0 for a in row[1:]]
-    m = pd.Series(l)
+        score = [float(a) if a != 'None' else 0 for a in row[1:]]
+    m = pd.Series(score)
     idx = m.idxmax()
     best_ratio = (idx + 1) * 50
     return best_ratio
@@ -57,7 +47,14 @@ def get_all_parameters_for_single_file(file_path):
     return d
 
 
+DIR = '../all_photos/'
+#DIR = '/Volumes/WeDeliverFTP/DATA_CAPTURE/invoices_pdfs_and_images/paragony_and_others/'
+
+files_names = [f for f in os.listdir(DIR) if isfile(join(DIR, f))]
+files_names.sort()
+
 for file in files_names[:1]:
-    file = 'IMG_5312.jpg'
+    file = 'IMG_5313.jpg'
     file_path = os.path.join(DIR, file)
+
     main(file_path)
