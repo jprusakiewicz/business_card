@@ -200,7 +200,12 @@ def show_segment(photo_path, ratio_parameter: int, PolyDP_ratio=0.02):
                 contour_area = cv2.contourArea(c)
                 quality_ratio = contour_area / (image.shape[0] * image.shape[1])
                 print(quality_ratio)
+                #todo why do i need this?
+                if screenCnt is False or quality_ratio < 0.15:
+                    print('DUPA', quality_ratio)
+                    return fallback(orig)
                 break
+            print(quality_ratio)
             if screenCnt is False or quality_ratio < 0.15:
                 print('DUPA', quality_ratio)
                 return fallback(orig)
@@ -223,9 +228,9 @@ def show_segment(photo_path, ratio_parameter: int, PolyDP_ratio=0.02):
     #cv2.imshow("Edged", imutils.resize(edged, height=650))
     #cv2.waitKey(0)
 
-    with open('image_to_send_to_ocr.jpg', 'rb') as f:
-        bc = f.read()
-    dat = {'file': bc}
+    #with open('image_to_send_to_ocr.jpg', 'rb') as f:
+     #   bc = f.read()
+    #dat = {'file': bc}
     #return dat
     return warped
 
@@ -236,3 +241,4 @@ def fallback(orig):
     #cv2.waitKey(0)
     return t
     #t = cv2.adaptiveThreshold(warped, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
+

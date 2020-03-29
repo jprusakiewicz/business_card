@@ -8,6 +8,7 @@ import imutils
 import cv2
 
 DIR = '../all_photos/'
+#DIR = '/Volumes/WeDeliverFTP/DATA_CAPTURE/invoices_pdfs_and_images/paragony_and_others/'
 #file = '20200323_150630.jpg'
 
 files_names = [f for f in os.listdir(DIR) if isfile(join(DIR, f))]
@@ -19,8 +20,6 @@ def main(file_path):
     d = get_all_parameters_for_single_file(file_path)
     best_ratio = get_best_parameter_for_single_file(d)
     scanned = cv2_process_image.show_segment(file_path, ratio_parameter=best_ratio)
-    #cv2.imshow("scanned", imutils.resize(scanned, height=650))
-    #cv2.waitKey(0)
     img = Image.fromarray(scanned, "L")
     img.save(os.path.join('../output/', file), "JPEG")
 
@@ -58,6 +57,7 @@ def get_all_parameters_for_single_file(file_path):
     return d
 
 
-for file in files_names[:]:
+for file in files_names[:1]:
+    file = 'IMG_5312.jpg'
     file_path = os.path.join(DIR, file)
     main(file_path)
