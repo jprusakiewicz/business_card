@@ -4,17 +4,20 @@ from os.path import isfile, join
 import pandas as pd
 import os
 from PIL import Image
+import io
 import time
 
 times_list = []
 
 
-def main(file_path): # return type: PIL.Image.Image
+def main(file_path):
     d = get_all_parameters_for_single_file(file_path)
     best_ratio = get_best_parameter_for_single_file(d)
     scanned = cv2_process_image.show_segment(file_path, ratio_parameter=best_ratio)
     img = Image.fromarray(scanned, "L")
-    return img
+    output = io.BytesIO()
+    img.save(output, format='JPEG')
+    return output.getvalue()
 
 
 
@@ -54,18 +57,3 @@ def get_all_parameters_for_single_file(file_path):
     return d
 
 
-# TESTING
-
-DIR = '../all_photos/'
-# DIR = '/Volumes/WeDeliverFTP/DATA_CAPTURE/invoices_pdfs_and_images/paragony_and_others/'
-
-files_names = [f for f in os.listdir(DIR) if isfile(join(DIR, f))]
-files_names.sort()
-
-
-for file in files_names[:]:
-    #file = 'IMG_5313.jpg' #testing on single file
-    file_path = os.path.join(DIR, file)
-
-    image = main(file_path)
-    image.save(os.path.join('../output/', file), "JPEG")
