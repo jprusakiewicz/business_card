@@ -9,15 +9,13 @@ import time
 times_list = []
 
 
-def main(file_path):
-    #time_0 = time.time()
+def main(file_path): # return type: PIL.Image.Image
     d = get_all_parameters_for_single_file(file_path)
     best_ratio = get_best_parameter_for_single_file(d)
     scanned = cv2_process_image.show_segment(file_path, ratio_parameter=best_ratio)
     img = Image.fromarray(scanned, "L")
-    #run_time = time.time() - time_0
-    #times_list.append(run_time)
-    img.save(os.path.join('../output/', file), "JPEG")
+    return img
+
 
 
 def get_best_parameter_for_single_file(d):
@@ -56,20 +54,18 @@ def get_all_parameters_for_single_file(file_path):
     return d
 
 
+# TESTING
+
 DIR = '../all_photos/'
 # DIR = '/Volumes/WeDeliverFTP/DATA_CAPTURE/invoices_pdfs_and_images/paragony_and_others/'
 
 files_names = [f for f in os.listdir(DIR) if isfile(join(DIR, f))]
 files_names.sort()
 
+
 for file in files_names[:]:
-    # file = 'IMG_5313.jpg' #testing on single file
+    #file = 'IMG_5313.jpg' #testing on single file
     file_path = os.path.join(DIR, file)
 
-    main(file_path)
-
-# time_df = pd.DataFrame({'file': files_names, "time": times_list})
-#
-# timing_save_path = os.path.join('../output/', "times_patent.csv")
-#
-# time_df.to_csv(timing_save_path, index=False)
+    image = main(file_path)
+    image.save(os.path.join('../output/', file), "JPEG")
