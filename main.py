@@ -4,20 +4,29 @@ from os.path import isfile, join
 import pandas as pd
 import os
 from PIL import Image
+import time
+
+times_list = []
 
 
 def main(file_path):
+    #time_0 = time.time()
     d = get_all_parameters_for_single_file(file_path)
     best_ratio = get_best_parameter_for_single_file(d)
     scanned = cv2_process_image.show_segment(file_path, ratio_parameter=best_ratio)
     img = Image.fromarray(scanned, "L")
+    #run_time = time.time() - time_0
+    #times_list.append(run_time)
     img.save(os.path.join('../output/', file), "JPEG")
 
 
 def get_best_parameter_for_single_file(d):
     df = pd.DataFrame(d)
-    for row in df.values:
-        score = [float(a) if a != 'None' else 0 for a in row[1:]]
+    try:
+        for row in df.values:
+            score = [float(a) if a != 'None' else 0 for a in row[1:]]
+    except Exception as e:
+        print(e, 'data frame may be broken')
     m = pd.Series(score)
     idx = m.idxmax()
     best_ratio = (idx + 1) * 50
@@ -48,13 +57,19 @@ def get_all_parameters_for_single_file(file_path):
 
 
 DIR = '../all_photos/'
-#DIR = '/Volumes/WeDeliverFTP/DATA_CAPTURE/invoices_pdfs_and_images/paragony_and_others/'
+# DIR = '/Volumes/WeDeliverFTP/DATA_CAPTURE/invoices_pdfs_and_images/paragony_and_others/'
 
 files_names = [f for f in os.listdir(DIR) if isfile(join(DIR, f))]
 files_names.sort()
 
-for file in files_names[:1]:
-    file = 'IMG_5313.jpg'
+for file in files_names[:]:
+    # file = 'IMG_5313.jpg' #testing on single file
     file_path = os.path.join(DIR, file)
 
     main(file_path)
+
+# time_df = pd.DataFrame({'file': files_names, "time": times_list})
+#
+# timing_save_path = os.path.join('../output/', "times_patent.csv")
+#
+# time_df.to_csv(timing_save_path, index=False)
