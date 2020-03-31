@@ -34,26 +34,47 @@ def get_best_parameter_for_single_file(d):
     return best_ratio
 
 
-def single_parameter_experiment(file_path, ratio_parameter):
+def single_parameter_experiment(file, ratio_parameter):
     try:
-        contour_area = find_best_ratio(file_path, ratio_parameter=ratio_parameter)
-        _results = {'file': file, ratio_parameter: str(contour_area)}
+        contour_area = find_best_ratio(file, ratio_parameter=ratio_parameter)
+        _results = {'file': 'file', ratio_parameter: str(contour_area)}
         return _results
     except Exception:
-        _results = {'file': file, ratio_parameter: 'failed'}
+        _results = {'file': 'file', ratio_parameter: 'failed'}
         return _results
 
 
-def get_all_parameters_for_single_file(file_path):
+def get_all_parameters_for_single_file(file):
     d = []
     ratio_parameter = 50
-    results = single_parameter_experiment(file_path=file_path, ratio_parameter=ratio_parameter)
+    results = single_parameter_experiment(file=file, ratio_parameter=ratio_parameter)
     ratio_parameter += 50
     while ratio_parameter < 550:
-        b = single_parameter_experiment(file_path=file_path, ratio_parameter=ratio_parameter)
+        b = single_parameter_experiment(file=file, ratio_parameter=ratio_parameter)
         results[ratio_parameter] = b[ratio_parameter]
         ratio_parameter += 50
     d.append(results)
     return d
 
+DIR = '../all_photos/'
+
+files_names = [f for f in os.listdir(DIR) if isfile(join(DIR, f))]
+files_names.sort()
+
+for file in files_names[:1]:
+ file = 'IMG_5435.jpg'
+ # file = 'IMG_5313.jpg' #testing on single file
+ file_path = os.path.join(DIR, file)
+ with open(file_path, "rb") as image:
+     f = image.read()
+     b = bytearray(f)
+     #print(b)
+
+ main(b)
+
+# time_df = pd.DataFrame({'file': files_names, "time": times_list})
+#
+# timing_save_path = os.path.join('../output/', "times_patent.csv")
+#
+# time_df.to_csv(timing_save_path, index=False)
 

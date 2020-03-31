@@ -2,6 +2,8 @@ from skimage.filters import threshold_local
 import numpy as np
 import cv2
 import imutils
+from PIL import Image
+import io
 
 
 # construct the argument parser and parse the arguments
@@ -76,8 +78,12 @@ def auto_canny(image, sigma=0.33):
     return edged
 
 
-def find_best_ratio(photo_path, ratio_parameter: int, poly_dp_ratio=0.02):
-    image = cv2.imread(photo_path)
+def find_best_ratio(photo, ratio_parameter: int, polydp_ratio=0.02):
+    # image = np.array(Image.open(io.BytesIO(photo)))
+
+    jpg_as_np = np.frombuffer(photo, dtype=np.uint8)
+    image = cv2.imdecode(jpg_as_np, flags=1)
+
     image = imutils.resize(image, height=ratio_parameter)
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     gray_blurred = cv2.medianBlur(gray, 7)
@@ -91,7 +97,7 @@ def find_best_ratio(photo_path, ratio_parameter: int, poly_dp_ratio=0.02):
     for c in contours:
         # approximate the contour
         peri = cv2.arcLength(c, True)
-        approx = cv2.approxPolyDP(c, poly_dp_ratio * peri, True)
+        approx = cv2.approxPolyDP(c, polydp_ratio * peri, True)
         # if our approximated contour has four points, then we
         # can assume that we have found our business card
         if len(approx) == 4:
@@ -101,9 +107,10 @@ def find_best_ratio(photo_path, ratio_parameter: int, poly_dp_ratio=0.02):
     return contour_area
 
 
-def show_segment(photo_path, ratio_parameter: int, poly_dp_ratio=0.02):
+def show_segment(photo, ratio_parameter: int, polydp_ratio=0.02):
     global quality_ratio
-    image = cv2.imread(photo_path)
+    jpg_as_np = np.frombuffer(photo, dtype=np.uint8)
+    image = cv2.imdecode(jpg_as_np, flags=1)
     ratio = image.shape[0] / ratio_parameter
     orig = image.copy()
     image = imutils.resize(image, height=ratio_parameter)
@@ -116,13 +123,12 @@ def show_segment(photo_path, ratio_parameter: int, poly_dp_ratio=0.02):
     contour = cv2.findContours(edged.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
     contour = imutils.grab_contours(contour)
     contour = sorted(contour, key=cv2.contourArea, reverse=True)[:]
-
-    screen_cnt = False
     # loop over the contours
+    screen_cnt = False
     for c in contour:
         # approximate the contour
         peri = cv2.arcLength(c, True)
-        approx = cv2.approxPolyDP(c, poly_dp_ratio * peri, True)
+        approx = cv2.approxPolyDP(c, polydp_ratio * peri, True)
         # if our approximated contour has four points, then we
         # can assume that we have found our screen
         if len(approx) == 4:
@@ -132,7 +138,7 @@ def show_segment(photo_path, ratio_parameter: int, poly_dp_ratio=0.02):
             break
 
     if screen_cnt is False or quality_ratio < 0.15:
-        # print('trying to close contour')
+        #print('trying to close contour')
         edged = cv2.Canny(gray_blurred, 10, 300)
         closing = cv2.morphologyEx(edged, cv2.MORPH_CLOSE, kernel)
         contour = cv2.findContours(closing.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
@@ -142,7 +148,7 @@ def show_segment(photo_path, ratio_parameter: int, poly_dp_ratio=0.02):
         for c in contour:
             # approximate the contour
             peri = cv2.arcLength(c, True)
-            approx = cv2.approxPolyDP(c, poly_dp_ratio * peri, True)
+            approx = cv2.approxPolyDP(c, polydp_ratio * peri, True)
             # if our approximated contour has four points, then we
             # can assume that we have found our screen
             if len(approx) == 4:
@@ -151,23 +157,26 @@ def show_segment(photo_path, ratio_parameter: int, poly_dp_ratio=0.02):
                 quality_ratio = contour_area / (image.shape[0] * image.shape[1])
                 # todo why do i need this below?
                 if screen_cnt is False or quality_ratio < 0.15:
-                    print('no accurate contour detected', quality_ratio)
+                    print('no accuratecontour detected', quality_ratio)
                     return fallback(orig)
                 break
     if screen_cnt is False or quality_ratio < 0.15:
-        print('no accurate contour detected', quality_ratio)
+        print('DUPA', quality_ratio)
         return fallback(orig)
     try:
         warped = four_point_transform(orig, screen_cnt.reshape(4, 2) * ratio)
-    except Exception as e:
-        print(e)
+    except Exception:
+        print('no contours')
         return fallback(orig)
-
     # convert the warped image to grayscale, then threshold it
     # to give it that 'black and white' paper effect
     warped = cv2.cvtColor(warped, cv2.COLOR_BGR2GRAY)
-    t = threshold_local(warped, 11, offset=8, method="mean")
+    t = threshold_local(warped, 19, offset=8, method="mean")
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 7))
+    t = cv2.morphologyEx(t, cv2.MORPH_CLOSE, kernel)
     warped = (warped > t).astype("uint8") * 255
+    cv2.imshow("scanned", imutils.resize(warped, height=650))
+    cv2.waitKey(0)
 
     return warped
 
@@ -176,4 +185,6 @@ def show_segment(photo_path, ratio_parameter: int, poly_dp_ratio=0.02):
 def fallback(orig):
     gray = cv2.cvtColor(orig, cv2.COLOR_BGR2GRAY)
     t = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 35, 17)
+    cv2.imshow("scanned", imutils.resize(t, height=650))
+    cv2.waitKey(0)
     return t
